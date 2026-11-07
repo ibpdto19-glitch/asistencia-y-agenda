@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Visitantes IPUC Playon</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            800: '#0c4a6e',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .touch-action-manipulation { touch-action: manipulation; }
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white">
+
+<div id="connection-bar" class="bg-slate-950 text-slate-300 text-xs py-1.5 px-4 flex items-center justify-between border-b border-slate-800">
+    <div class="flex items-center space-x-2">
+        <span id="sync-status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span id="sync-status-text" class="font-medium text-[11px]"><span class="text-emerald-400 font-bold">🟢 En línea:</span> Conectado a la Nube (Sincronización Activa)</span>
+    </div>
+    <div class="text-[10px] text-slate-400">
+        <span id="cloud-mode-label" class="bg-slate-800 px-2 py-0.5 rounded border border-slate-700">Firebase Firestore</span>
+    </div>
+</div>
+
+    <!-- HEADER / NAVIGATION BAR -->
+    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                 <div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-white shadow-md overflow-hidden border border-slate-700">
+                    <img src="LOGO_IPUC_2013_COLOR.png" alt="Logo Iglesia" class="w-full h-full object-cover">
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-base md:text-lg leading-tight tracking-tight">Registro de visitas y amigos</h1>
+                    <p class="text-xs text-slate-400 font-medium">Registro & Agenda visitasntes & amigos</p>
+                </div>
+            </div>
+
+            <!-- Navegación de Vistas -->
+            <nav class="flex items-center space-x-1 bg-slate-800 p-1 rounded-xl border border-slate-700">
+                <button id="nav-kiosk-btn" onclick="window.switchView('kiosk')" class="flex items-center space-x-2 px-3 md:px-4 py-2 rounded-lg font-semibold transition-all duration-200 bg-brand-600 text-white shadow">
+                    <i class="fa-solid fa-tablet-screen-button"></i>
+                    <span class="hidden sm:inline text-xs md:text-sm">Registrar Visita</span>
+                </button>
+                <button id="nav-admin-btn" onclick="window.switchView('admin')" class="flex items-center space-x-2 px-3 md:px-4 py-2 rounded-lg font-semibold text-slate-400 hover:text-white transition-all duration-200">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span class="hidden sm:inline text-xs md:text-sm">Lista del Día</span>
+                    <span id="active-count-badge" class="bg-brand-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full ml-1">0</span>
+                </button>
+                <button id="nav-agenda-btn" onclick="window.switchView('agenda')" class="flex items-center space-x-2 px-3 md:px-4 py-2 rounded-lg font-semibold text-slate-400 hover:text-white transition-all duration-200 relative">
+                    <i class="fa-solid fa-calendar-user text-amber-400"></i>
+                    <span class="hidden sm:inline text-xs md:text-sm">Agenda Pastoral</span>
+                    <span id="pending-visits-badge" class="bg-amber-500 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-full ml-1 hidden">0</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- NOTIFICATION TOAST FLOATING -->
+    <div id="toast-notification" class="fixed top-20 right-4 z-50 transform translate-x-full transition-transform duration-300 ease-out max-w-sm w-full bg-slate-900 text-white p-4 rounded-2xl shadow-2xl border border-amber-500/40 flex items-start space-x-3 pointer-events-none">
+        <div class="w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+            <i class="fa-solid fa-bell text-lg"></i>
+        </div>
+        <div class="flex-1">
+            <h4 class="font-bold text-sm text-amber-400">¡Nueva Solicitud de Visita!</h4>
+            <p id="toast-message" class="text-xs text-slate-300 mt-1">Alguien ha solicitado una visita pastoral.</p>
+        </div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full">
+
+        <!-- 1. VISTA KIOSCO (FORMULARIO TABLET) -->
+        <section id="kiosk-view" class="max-w-2xl mx-auto transition-all duration-300">
+            <div class="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+                <!-- Header del Formulario -->
+                <div class="bg-gradient-to-r from-slate-900 via-brand-900 to-slate-900 p-6 md:p-8 text-white relative">
+                    <div class="relative z-10">
+                        <span class="bg-brand-500/30 text-brand-200 text-xs font-bold px-3 py-1 rounded-full border border-brand-400/30">Formulario de Bienvenida</span>
+                        <h2 class="text-2xl md:text-3xl font-black mt-2">¡Qué alegría tenerte aquí!</h2>
+                        <p class="text-slate-300 text-sm mt-1">Por favor completa tus datos para estar en contacto y brindarte la mejor atención.</p>
+                    </div>
+                </div>
+
+                <!-- Formulario -->
+                <form id="visitor-form" class="p-6 md:p-8 space-y-6" onsubmit="window.handleFormSubmit(event)">
+                    
+                    <!-- Culto / Servicio -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                            <i class="fa-solid fa-place-of-worship mr-1 text-brand-600"></i> Culto o Servicio al que asistes *
+                        </label>
+                        <select id="service-type" required onchange="window.toggleOtherService(this.value)" class="w-full px-4 py-3.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-slate-50 text-slate-800 text-sm font-semibold transition">
+                            <option value="" disabled selected>Selecciona una opción...</option>
+                            <option value="Escuela Dominical">Escuela Dominical</option>
+                            <option value="Servicio de Oración">Servicio de Oración</option>
+                            <option value="Reunión de Damas">Reunión de Damas</option>
+                            <option value="Reunión de Caballeros">Reunión de Caballeros</option>
+                            <option value="Reunión de Jóvenes">Reunión de Jóvenes</option>
+                            <option value="Culto Evangelístico">Culto Evangelístico</option>
+                            <option value="Campaña Especial">Campaña Especial</option>
+                            <option value="Semana de la Familia">Semana de la Familia</option>
+                            <option value="Otro">Otro (Especificar)</option>
+                        </select>
+                    </div>
+
+                    <!-- Campo manual si elige 'Otro' -->
+                    <div id="other-service-container" class="hidden">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Especifica el Servicio / Evento</label>
+                        <input type="text" id="other-service-input" placeholder="Ej: Evento de Niños, Conferencia..." class="w-full px-4 py-3.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 bg-slate-50 text-sm font-medium">
+                    </div>
+
+                    <!-- Nombre Completo y Celular -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                                <i class="fa-solid fa-user mr-1 text-brand-600"></i> Nombre Completo *
+                            </label>
+                            <input type="text" id="full-name" required placeholder="Nombre y Apellidos" class="w-full px-4 py-3.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 bg-slate-50 text-slate-800 text-sm font-medium">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                                <i class="fa-solid fa-mobile-screen mr-1 text-brand-600"></i> Celular / WhatsApp *
+                            </label>
+                            <input type="tel" id="phone" required placeholder="Ej: 300 123 4567" class="w-full px-4 py-3.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 bg-slate-50 text-slate-800 text-sm font-medium">
+                        </div>
+                    </div>
+
+                    <!-- Correo Electrónico -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                            <i class="fa-solid fa-envelope mr-1 text-brand-600"></i> Correo Electrónico (Opcional)
+                        </label>
+                        <input type="email" id="email" placeholder="correo@ejemplo.com" class="w-full px-4 py-3.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 bg-slate-50 text-slate-800 text-sm font-medium">
+                    </div>
+
+                    <!-- ¿Vino solo o acompañado? -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                            <i class="fa-solid fa-users mr-1 text-brand-600"></i> ¿Asistes solo(a) o acompañado(a)?
+                        </label>
+                        <select id="company-status" onchange="window.toggleCompanyDetails(this.value)" class="w-full px-4 py-3.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 bg-slate-50 text-slate-800 text-sm font-semibold">
+                            <option value="Vino solo">Vengo Solo(a)</option>
+                            <option value="Acompañado de Familiar">Acompañado(a) por Familiar(es)</option>
+                            <option value="Acompañado de Amigo/Hermano">Invitado(a) por un Hermano(a) o Amigo(a)</option>
+                        </select>
+                    </div>
+
+                    <div id="company-detail-container" class="hidden">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">¿Quién te invitó o quién te acompaña?</label>
+                        <input type="text" id="company-details" placeholder="Nombre de la persona o familiar" class="w-full px-4 py-3.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 bg-slate-50 text-sm font-medium">
+                    </div>
+
+                    <!-- PREGUNTA PASTORAL: ¿Le gustaría que le visitemos? -->
+                    <div class="p-5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl space-y-4">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-8 h-8 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-black shrink-0 mt-0.5">
+                                <i class="fa-solid fa-heart"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-sm">Atención Pastoral</h3>
+                                <p class="text-slate-600 text-xs">¿Te gustaría recibir una visita pastoral o de oración en tu hogar?</p>
+                            </div>
+                        </div>
+
+                        <select id="wants-visit" onchange="window.toggleVisitSchedule(this.value)" class="w-full px-4 py-3 rounded-xl border border-amber-300 bg-white text-slate-800 font-bold text-sm focus:ring-2 focus:ring-amber-500">
+                            <option value="No por ahora">No por ahora, gracias</option>
+                            <option value="Sí">Sí, me gustaría una visita</option>
+                            <option value="Tal vez">Tal vez más adelante</option>
+                        </select>
+
+                        <!-- Campos dinámicos de Fecha y Hora de Visita -->
+                        <div id="visit-schedule-container" class="hidden grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                            <div>
+                                <label class="block text-xs font-bold text-amber-900 mb-1">Fecha tentativa sugerida</label>
+                                <input type="date" id="visit-date" class="w-full px-3 py-2.5 rounded-lg border border-amber-300 bg-white text-xs font-semibold">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-amber-900 mb-1">Hora orientativa</label>
+                                <input type="time" id="visit-time" class="w-full px-3 py-2.5 rounded-lg border border-amber-300 bg-white text-xs font-semibold">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botón Enviar -->
+                    <button type="submit" class="w-full py-4 bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white rounded-2xl font-black text-base shadow-lg shadow-brand-500/30 transition duration-200 flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>Registrar Mi Visita</span>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- 2. VISTA BITÁCORA DEL DÍA (RECEPCIÓN) -->
+        <section id="admin-view" class="hidden space-y-6">
+            <!-- Métricas Rápida -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl font-bold shrink-0">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase">Total Asistentes</p>
+                        <h3 id="stat-total" class="text-2xl font-black text-slate-800">0</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl font-bold shrink-0">
+                        <i class="fa-solid fa-house-chimney-user"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase">Visitas Solicitadas</p>
+                        <h3 id="stat-visits-requested" class="text-2xl font-black text-slate-800">0</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl font-bold shrink-0">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase">Culto Principal</p>
+                        <h3 id="stat-main-service" class="text-sm font-black text-slate-800 truncate max-w-[150px]">---</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de Registros -->
+            <div class="bg-white rounded-3xl shadow-md border border-slate-200 overflow-hidden">
+                <div class="p-5 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-lg">Asistentes Registrados</h3>
+                        <p class="text-xs text-slate-400">Listado de personas ingresadas durante la jornada</p>
+                    </div>
+                    <div class="relative max-w-xs w-full">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-sm"></i>
+                        <input type="text" id="search-input" onkeyup="window.filterVisitors()" placeholder="Buscar nombre, celular..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-[10px] tracking-wider font-extrabold">
+                                <th class="py-3 px-4">Visitante</th>
+                                <th class="py-3 px-4">Celular</th>
+                                <th class="py-3 px-4">Servicio</th>
+                                <th class="py-3 px-4">Acompañamiento</th>
+                                <th class="py-3 px-4 text-center">Visita Pastoral</th>
+                                <th class="py-3 px-4 text-center">Fecha/Hora Propuesta</th>
+                                <th class="py-3 px-4 text-center">Hora Registro</th>
+                            </tr>
+                        </thead>
+                        <tbody id="visitors-table-body">
+                            <!-- JS Inject Rows -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="empty-state" class="py-12 text-center text-slate-400 space-y-2">
+                    <i class="fa-solid fa-folder-open text-4xl"></i>
+                    <p class="text-sm font-semibold">No se han registrado visitantes aún hoy.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. VISTA AGENDA PASTORAL -->
+        <section id="agenda-view" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                    <span class="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full">Seguimiento Pastoral</span>
+                    <h2 class="text-xl md:text-2xl font-black text-slate-800 mt-1">Agenda de Visitas Pastoral</h2>
+                    <p class="text-xs text-slate-500">Gestiona las visitas agendadas, contacta por WhatsApp o coordina horarios con los hermanos.</p>
+                </div>
+
+                <!-- Filtros de Pestañas en Agenda -->
+                <div class="flex items-center space-x-1 bg-slate-100 p-1 rounded-2xl border border-slate-200">
+                    <button id="agenda-tab-all" onclick="window.filterAgendaTab('all')" class="px-3 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white shadow">
+                        Todas (<span id="count-agenda-all">0</span>)
+                    </button>
+                    <button id="agenda-tab-pending" onclick="window.filterAgendaTab('pending')" class="px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200">
+                        Pendientes (<span id="count-agenda-pending">0</span>)
+                    </button>
+                    <button id="agenda-tab-completed" onclick="window.filterAgendaTab('completed')" class="px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200">
+                        Realizadas (<span id="count-agenda-completed">0</span>)
+                    </button>
+                    <button id="agenda-tab-today" onclick="window.filterAgendaTab('today')" class="px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200">
+                        Para Hoy
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grilla de Tarjetas de Visitas -->
+            <div id="agenda-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Tarjetas dinámicas inyectadas por JS -->
+            </div>
+
+            <div id="agenda-empty-state" class="bg-white rounded-3xl p-12 text-center text-slate-400 space-y-2 border border-slate-200">
+                <i class="fa-solid fa-calendar-xmark text-4xl text-slate-300"></i>
+                <p class="text-sm font-semibold">No hay visitas agendadas en esta categoría.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 border-t border-slate-800 text-slate-500 text-center py-4 text-xs">
+        <p>&copy; <span id="year">2026</span> Recepción Iglesia - Agenda Pastoral & Sincronización en Tiempo Real</p>
+    </footer>
+
+    <!-- SUCCESS MODAL -->
+    <div id="success-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl transform scale-95 transition-transform duration-300 border border-slate-100">
+            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <h3 class="text-2xl font-black text-slate-800 mb-2">¡Bienvenido(a)!</h3>
+            <p class="text-slate-600 text-sm mb-6">Tus datos han sido registrados con éxito. Nos alegra mucho tenerte con nosotros hoy.</p>
+            <button onclick="window.closeModal()" class="w-full py-3.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold shadow-lg transition duration-200">
+                Aceptar
+            </button>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE FIREBASE PARA SINCRONIZACIÓN EN TIEMPO REAL MULTI-DISPOSITIVO -->
+   <script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyCbTw5CVcyoeWa9Ix4WyDHzLH2HZXzb8uw",
+    authDomain: "visitas-iglesia.firebaseapp.com",
+    projectId: "visitas-iglesia",
+    storageBucket: "visitas-iglesia.firebasestorage.app",
+    messagingSenderId: "524505918990",
+    appId: "1:524505918990:web:34b72e55679f2cbcea565f",
+    measurementId: "G-KWYRZR8097"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+
+    <!-- SCRIPT PRINCIPAL RESTAURADO Y DE ALTA FIABILIDAD -->
+    <script>
+        // Array global de datos e inicialización inmediata de funciones de interfaz
+        window.visitorsData = JSON.parse(localStorage.getItem('church_visitors_local_db') || '[]');
+        window.currentAgendaFilter = 'all';
+
+        // Escape seguro para HTML
+        window.escapeHtml = function(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        };
+
+        // Alternar servicios ("Otro")
+        window.toggleOtherService = function(val) {
+            const container = document.getElementById('other-service-container');
+            if (container) {
+                if (val === 'Otro') container.classList.remove('hidden');
+                else container.classList.add('hidden');
+            }
+        };
+
+        // Alternar detalles de acompañantes
+        window.toggleCompanyDetails = function(val) {
+            const container = document.getElementById('company-detail-container');
+            if (container) {
+                if (val && val !== 'Vino solo') container.classList.remove('hidden');
+                else container.classList.add('hidden');
+            }
+        };
+
+        // Alternar campos de visita pastoral agendada
+        window.toggleVisitSchedule = function(val) {
+            const container = document.getElementById('visit-schedule-container');
+            if (container) {
+                if (val === 'Sí' || val === 'Tal vez') container.classList.remove('hidden');
+                else container.classList.add('hidden');
+            }
+        };
+
+        // Cambiar Vistas (Kiosco / Lista de Entrada / Agenda Pastoral)
+        window.switchView = function(view) {
+            const kioskView = document.getElementById('kiosk-view');
+            const adminView = document.getElementById('admin-view');
+            const agendaView = document.getElementById('agenda-view');
+
+            const kioskBtn = document.getElementById('nav-kiosk-btn');
+            const adminBtn = document.getElementById('nav-admin-btn');
+            const agendaBtn = document.getElementById('nav-agenda-btn');
+
+            if (!kioskView || !adminView || !agendaView) return;
+
+            kioskView.classList.add('hidden');
+            adminView.classList.add('hidden');
+            agendaView.classList.add('hidden');
+
+            const defaultClass = "flex items-center space-x-2 px-3 md:px-4 py-2 rounded-lg font-semibold text-slate-400 hover:text-white transition-all duration-200";
+            kioskBtn.className = defaultClass;
+            adminBtn.className = defaultClass;
+            agendaBtn.className = defaultClass + " relative";
+
+            if (view === 'kiosk') {
+                kioskView.classList.remove('hidden');
+                kioskBtn.className = "flex items-center space-x-2 px-3 md:px-4 py-2 rounded-lg font-semibold transition-all duration-200 bg-brand-600 text-white shadow";
+            } else if (view === 'admin') {
+                adminView.classList.remove('hidden');
+                adminBtn.className = "flex items-center space-x-2 px-3 md:px-4 py-2 rounded-lg font-semibold transition-all duration-200 bg-brand-600 text-white shadow";
+                window.renderVisitorsTable();
+            } else if (view === 'agenda') {
+                agendaView.classList.remove('hidden');
+                agendaBtn.className = "flex items-center space-x-2 px-3 md:px-4 py-2 rounded-lg font-semibold transition-all duration-200 bg-amber-500 text-slate-900 shadow font-bold";
+                window.renderAgendaGrid();
+            }
+        };
+
+        // Guardar visitantes localmente
+        window.saveLocalData = function(data) {
+            try {
+                localStorage.setItem('church_visitors_local_db', JSON.stringify(data));
+            } catch(e) {
+                console.error("Error al guardar:", e);
+            }
+        };
+
+        // Manejo del formulario de envío
+        window.handleFormSubmit = async function(event) {
+            event.preventDefault();
+
+            let serviceType = document.getElementById('service-type')?.value;
+            if (serviceType === 'Otro') {
+                serviceType = document.getElementById('other-service-input')?.value || 'Otro';
+            }
+
+            const fullName = document.getElementById('full-name')?.value || '';
+            const phone = document.getElementById('phone')?.value || '';
+            const email = document.getElementById('email')?.value || '';
+            const companyStatus = document.getElementById('company-status')?.value || 'Vino solo';
+            const companyDetails = document.getElementById('company-details')?.value || '';
+            const wantsVisit = document.getElementById('wants-visit')?.value || 'No por ahora';
+            const visitDate = document.getElementById('visit-date')?.value || '';
+            const visitTime = document.getElementById('visit-time')?.value || '';
+
+            const now = new Date();
+            const recordData = {
+                fullName,
+                phone,
+                email,
+                serviceType,
+                companyStatus,
+                companyDetails,
+                wantsVisit,
+                visitDate,
+                visitTime,
+                visitStatus: 'Pendiente',
+                createdDate: now.toLocaleDateString(),
+                createdTime: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                timestamp: Date.now()
+            };
+
+            // 1. Guardar en la Nube (si está configurada)
+            if (typeof window.saveVisitorRecord === 'function') {
+                const cloudId = await window.saveVisitorRecord(recordData);
+                if (cloudId) {
+                    recordData.id = cloudId;
+                }
+            }
+
+            if (!recordData.id) {
+                recordData.id = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+                window.visitorsData.unshift(recordData);
+                window.saveLocalData(window.visitorsData);
+            }
+
+            // Notificación visual de éxito
+            window.showSuccessModal();
+
+            // Notificación flotante si solicita visita
+            if (wantsVisit === 'Sí' || wantsVisit === 'Tal vez') {
+                window.showToastNotification(fullName);
+            }
+
+            // Resetear formulario
+            document.getElementById('visitor-form')?.reset();
+            window.toggleOtherService('');
+            window.toggleCompanyDetails('Vino solo');
+            window.toggleVisitSchedule('No por ahora');
+
+            // Actualizar contadores
+            window.updateBadges();
+        };
+
+        // Modal de Éxito
+        window.showSuccessModal = function() {
+            const modal = document.getElementById('success-modal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.children[0].classList.remove('scale-95');
+                modal.children[0].classList.add('scale-100');
+            }, 10);
+        };
+
+        window.closeModal = function() {
+            const modal = document.getElementById('success-modal');
+            if (!modal) return;
+            modal.classList.add('opacity-0');
+            modal.children[0].classList.remove('scale-100');
+            modal.children[0].classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        };
+
+        // Toast de Notificación
+        window.showToastNotification = function(name) {
+            const toast = document.getElementById('toast-notification');
+            const msg = document.getElementById('toast-message');
+            if (!toast || !msg) return;
+
+            msg.textContent = `${name} ha solicitado una visita pastoral.`;
+            toast.classList.remove('translate-x-full');
+
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+            }, 4000);
+        };
+
+        // Renderizar Tabla de Visitantes
+        window.renderVisitorsTable = function(filterQuery = '') {
+            const tbody = document.getElementById('visitors-table-body');
+            const emptyState = document.getElementById('empty-state');
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+            let list = window.visitorsData;
+
+            if (filterQuery) {
+                const q = filterQuery.toLowerCase();
+                list = list.filter(v => 
+                    (v.fullName && v.fullName.toLowerCase().includes(q)) || 
+                    (v.phone && v.phone.toLowerCase().includes(q)) ||
+                    (v.serviceType && v.serviceType.toLowerCase().includes(q))
+                );
+            }
+
+            const statTotalEl = document.getElementById('stat-total');
+            if (statTotalEl) statTotalEl.textContent = window.visitorsData.length;
+
+            const statVisitsEl = document.getElementById('stat-visits-requested');
+            if (statVisitsEl) statVisitsEl.textContent = window.visitorsData.filter(v => v.wantsVisit === 'Sí' || v.wantsVisit === 'Tal vez').length;
+
+            const statServiceEl = document.getElementById('stat-main-service');
+            if (statServiceEl) {
+                if (window.visitorsData.length > 0) {
+                    const counts = {};
+                    window.visitorsData.forEach(v => { counts[v.serviceType] = (counts[v.serviceType] || 0) + 1; });
+                    const topService = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b, '');
+                    statServiceEl.textContent = topService || '---';
+                } else {
+                    statServiceEl.textContent = '---';
+                }
+            }
+
+            if (list.length === 0) {
+                if (emptyState) emptyState.classList.remove('hidden');
+                return;
+            } else {
+                if (emptyState) emptyState.classList.add('hidden');
+            }
+
+            list.forEach(v => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-100 text-xs md:text-sm";
+                const badgeClass = v.wantsVisit === 'Sí' 
+                    ? 'bg-emerald-100 text-emerald-800 border-emerald-200' 
+                    : (v.wantsVisit === 'Tal vez' ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-slate-100 text-slate-600 border-slate-200');
+
+                tr.innerHTML = `
+                    <td class="py-4 px-4 font-bold text-slate-800">${window.escapeHtml(v.fullName)}</td>
+                    <td class="py-4 px-4 text-slate-600"><i class="fa-solid fa-phone text-xs mr-1 text-slate-400"></i>${window.escapeHtml(v.phone)}</td>
+                    <td class="py-4 px-4 font-semibold text-blue-700"><span class="px-2.5 py-1 text-xs rounded-lg bg-blue-50 border border-blue-100">${window.escapeHtml(v.serviceType)}</span></td>
+                    <td class="py-4 px-4 text-slate-600">${window.escapeHtml(v.companyStatus)} ${v.companyDetails ? `<br><span class="text-xs text-slate-400">(${window.escapeHtml(v.companyDetails)})</span>` : ''}</td>
+                    <td class="py-4 px-4 text-center"><span class="px-2.5 py-1 text-xs rounded-full font-bold border ${badgeClass}">${window.escapeHtml(v.wantsVisit)}</span></td>
+                    <td class="py-4 px-4 text-center text-xs"><strong>${window.escapeHtml(v.visitDate || '-')}</strong><br>${window.escapeHtml(v.visitTime || '')}</td>
+                    <td class="py-4 px-4 text-center text-xs text-slate-400">${window.escapeHtml(v.createdDate)}<br>${window.escapeHtml(v.createdTime)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        };
+
+        // Renderizar Tarjetas de la Agenda Pastoral
+        window.renderAgendaGrid = function() {
+            const container = document.getElementById('agenda-cards-container');
+            const emptyState = document.getElementById('agenda-empty-state');
+            if (!container) return;
+
+            let agendaList = window.visitorsData.filter(v => v.wantsVisit === 'Sí' || v.wantsVisit === 'Tal vez');
+            
+            const countAllEl = document.getElementById('count-agenda-all');
+            if (countAllEl) countAllEl.textContent = agendaList.length;
+
+            const countPendingEl = document.getElementById('count-agenda-pending');
+            if (countPendingEl) countPendingEl.textContent = agendaList.filter(v => (v.visitStatus || 'Pendiente') === 'Pendiente').length;
+
+            const countCompletedEl = document.getElementById('count-agenda-completed');
+            if (countCompletedEl) countCompletedEl.textContent = agendaList.filter(v => v.visitStatus === 'Completada').length;
+
+            const filter = window.currentAgendaFilter || 'all';
+            if (filter === 'pending') agendaList = agendaList.filter(v => (v.visitStatus || 'Pendiente') === 'Pendiente');
+            else if (filter === 'completed') agendaList = agendaList.filter(v => v.visitStatus === 'Completada');
+            else if (filter === 'today') {
+                const todayStr = new Date().toISOString().split('T')[0];
+                agendaList = agendaList.filter(v => v.visitDate === todayStr);
+            }
+
+            container.innerHTML = '';
+            if (agendaList.length === 0) {
+                if (emptyState) emptyState.classList.remove('hidden');
+                return;
+            } else {
+                if (emptyState) emptyState.classList.add('hidden');
+            }
+
+            agendaList.forEach(item => {
+                const cleanPhone = item.phone ? item.phone.replace(/\D/g, '') : '';
+                const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent('Hola ' + item.fullName + ', te saludamos de la Iglesia para coordinar tu visita pastoral.')}`;
+                const isCompleted = item.visitStatus === 'Completada';
+
+                const card = document.createElement('div');
+                card.className = `bg-white border rounded-2xl p-5 shadow-sm space-y-4 ${isCompleted ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200'}`;
+                card.innerHTML = `
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-base">${window.escapeHtml(item.fullName)}</h3>
+                            <p class="text-xs text-slate-400">Servicio: ${window.escapeHtml(item.serviceType)}</p>
+                        </div>
+                        <span class="${isCompleted ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'} text-[10px] font-bold px-2 py-0.5 rounded-full">
+                            ${isCompleted ? 'Completada' : 'Pendiente'}
+                        </span>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs space-y-1">
+                        <div><i class="fa-solid fa-calendar text-brand-600 w-5"></i> <strong>Fecha:</strong> ${window.escapeHtml(item.visitDate || 'Por definir')}</div>
+                        <div><i class="fa-solid fa-clock text-brand-600 w-5"></i> <strong>Hora:</strong> ${window.escapeHtml(item.visitTime || 'Por definir')}</div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                        <a href="${waUrl}" target="_blank" class="py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-center text-xs font-bold transition"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>
+                        <a href="tel:${window.escapeHtml(item.phone)}" class="py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-center text-xs font-bold transition"><i class="fa-solid fa-phone"></i> Llamar</a>
+                    </div>
+                    <button onclick="window.updateVisitStatus('${item.id}', '${isCompleted ? 'Pendiente' : 'Completada'}')" class="w-full py-2 ${isCompleted ? 'bg-slate-200 text-slate-700' : 'bg-brand-600 text-white'} rounded-xl text-xs font-bold hover:opacity-90 transition">
+                        ${isCompleted ? 'Marcar como Pendiente' : 'Marcar como Realizada'}
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        };
+
+        // Cambiar estado de visita (con sincronización en la nube si está disponible)
+        window.updateVisitStatus = function(id, newStatus) {
+            if (typeof window.updateVisitorStatusCloud === 'function') {
+                window.updateVisitorStatusCloud(id, newStatus);
+            } else {
+                const item = window.visitorsData.find(v => v.id === id);
+                if (item) {
+                    item.visitStatus = newStatus;
+                    window.saveLocalData(window.visitorsData);
+                    window.renderAgendaGrid();
+                    window.updateBadges();
+                }
+            }
+        };
+
+        // Filtro de la agenda
+        window.filterAgendaTab = function(filter) {
+            window.currentAgendaFilter = filter;
+            ['all', 'pending', 'completed', 'today'].forEach(t => {
+                const btn = document.getElementById(`agenda-tab-${t}`);
+                if (btn) {
+                    if (t === filter) btn.className = "px-3 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white shadow";
+                    else btn.className = "px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200";
+                }
+            });
+            window.renderAgendaGrid();
+        };
+
+        // Actualizar contadores
+        window.updateBadges = function() {
+            const activeBadge = document.getElementById('active-count-badge');
+            if (activeBadge) {
+                activeBadge.textContent = window.visitorsData.length;
+            }
+
+            const pending = window.visitorsData.filter(v => (v.wantsVisit === 'Sí' || v.wantsVisit === 'Tal vez') && v.visitStatus !== 'Completada').length;
+            const pendingBadge = document.getElementById('pending-visits-badge');
+            if (pendingBadge) {
+                if (pending > 0) {
+                    pendingBadge.textContent = pending;
+                    pendingBadge.classList.remove('hidden');
+                } else {
+                    pendingBadge.classList.add('hidden');
+                }
+            }
+        };
+
+        window.filterVisitors = function() {
+            const val = document.getElementById('search-input')?.value || '';
+            window.renderVisitorsTable(val);
+        };
+
+        // Carga inicial
+        window.onload = function() {
+            const yearEl = document.getElementById('year');
+            if (yearEl) yearEl.textContent = new Date().getFullYear();
+            
+            window.updateBadges();
+            window.renderVisitorsTable();
+        };
+    </script>
+</body>
+</html>
