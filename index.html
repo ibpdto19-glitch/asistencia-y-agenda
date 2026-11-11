@@ -738,22 +738,19 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
     import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-    // Pega aquí la configuración exacta que te da Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyDA9BBg3kF_nty4SEcFyV_h-EO5G1nmAsQ",
         authDomain: "asistencias-f909f.firebaseapp.com",
         projectId: "asistencias-f909f",
         storageBucket: "asistencias-f909f.firebasestorage.app",
         messagingSenderId: "541148407775",
-        appId:  "1:541148407775:web:f4e1aaaa87c05452ebc66a"
+        appId: "1:541148407775:web:f4e1aaaa87c05452ebc66a"
     };
 
-    // Inicializar Firebase aqui y Firestore
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const collectionName = "visitantes_ipuc";
 
-    // Guardar registro en la nube
     window.saveVisitorRecord = async function(recordData) {
         try {
             const docRef = await addDoc(collection(db, collectionName), recordData);
@@ -764,7 +761,6 @@
         }
     };
 
-    // Actualizar estado de visita
     window.updateVisitorStatusCloud = async function(id, newStatus) {
         try {
             const docRef = doc(db, collectionName, id);
@@ -774,7 +770,6 @@
         }
     };
 
-    // Sincronización en tiempo real entre dispositivos
     const q = query(collection(db, collectionName), orderBy("timestamp", "desc"));
     onSnapshot(q, (snapshot) => {
         window.visitorsData = [];
