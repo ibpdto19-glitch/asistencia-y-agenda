@@ -353,32 +353,6 @@
         </div>
     </div>
 
-    <!-- SCRIPT DE FIREBASE PARA SINCRONIZACIÓN EN TIEMPO REAL MULTI-DISPOSITIVO -->
-   <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyCbTw5CVcyoeWa9Ix4WyDHzLH2HZXzb8uw",
-    authDomain: "visitas-iglesia.firebaseapp.com",
-    projectId: "visitas-iglesia",
-    storageBucket: "visitas-iglesia.firebasestorage.app",
-    messagingSenderId: "524505918990",
-    appId: "1:524505918990:web:34b72e55679f2cbcea565f",
-    measurementId: "G-KWYRZR8097"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-</script>
-
-    <!-- SCRIPT PRINCIPAL RESTAURADO Y DE ALTA FIABILIDAD -->
     <script>
         // Array global de datos e inicialización inmediata de funciones de interfaz
         window.visitorsData = JSON.parse(localStorage.getItem('church_visitors_local_db') || '[]');
@@ -760,44 +734,63 @@
             window.renderVisitorsTable();
         };
     </script>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-    <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
+    // Pega aquí la configuración exacta que te da Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyDA9BBg3kF_nty4SEcFyV_h-EO5G1nmAsQ",
+        authDomain: "asistencias-f909f.firebaseapp.com",
+        projectId: "asistencias-f909f,
+        storageBucket: "asistencias-f909f.firebasestorage.app",
+        messagingSenderId: "541148407775",
+        appId:  "1:541148407775:web:f4e1aaaa87c05452ebc66a"
+    };
 
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyCs2B8O5ycZCuqiNwDpg6Hc9m5aU_dQfFo",
-    authDomain: "ujieres-bis.firebaseapp.com",
-    projectId: "ujieres-bis",
-    storageBucket: "ujieres-bis.firebasestorage.app",
-    messagingSenderId: "627635970139",
-    appId: "1:627635970139:web:6c8d0b9ba95596f9365f7e"
-  };
+    // Inicializar Firebase y Firestore
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const collectionName = "visitantes_ipuc";
 
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-</script>
-    <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
+    // Guardar registro en la nube
+    window.saveVisitorRecord = async function(recordData) {
+        try {
+            const docRef = await addDoc(collection(db, collectionName), recordData);
+            return docRef.id;
+        } catch (e) {
+            console.error("Error al guardar en Firestore: ", e);
+            return null;
+        }
+    };
 
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyCs2B8O5ycZCuqiNwDpg6Hc9m5aU_dQfFo",
-    authDomain: "ujieres-bis.firebaseapp.com",
-    projectId: "ujieres-bis",
-    storageBucket: "ujieres-bis.firebasestorage.app",
-    messagingSenderId: "627635970139",
-    appId: "1:627635970139:web:6c8d0b9ba95596f9365f7e"
-  };
+    // Actualizar estado de visita
+    window.updateVisitorStatusCloud = async function(id, newStatus) {
+        try {
+            const docRef = doc(db, collectionName, id);
+            await updateDoc(docRef, { visitStatus: newStatus });
+        } catch (e) {
+            console.error("Error al actualizar estado:", e);
+        }
+    };
 
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
+    // Sincronización en tiempo real entre dispositivos
+    const q = query(collection(db, collectionName), orderBy("timestamp", "desc"));
+    onSnapshot(q, (snapshot) => {
+        window.visitorsData = [];
+        snapshot.forEach((docSnap) => {
+            window.visitorsData.push({
+                id: docSnap.id,
+                ...docSnap.data()
+            });
+        });
+
+        window.updateBadges();
+        window.renderVisitorsTable();
+        window.renderAgendaGrid();
+    }, (error) => {
+        console.error("Error de sincronización: ", error);
+    });
 </script>
 </body>
 </html>
