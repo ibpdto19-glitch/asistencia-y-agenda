@@ -36,11 +36,16 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         .touch-action-manipulation { touch-action: manipulation; }
-        /* Custom Scrollbars */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        @media print {
+            body * { visibility: hidden; }
+            #admin-view, #admin-view * { visibility: visible; }
+            #admin-view { position: absolute; left: 0; top: 0; width: 100%; }
+            #connection-bar, header, footer, .no-print { display: none !important; }
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white">
@@ -51,7 +56,7 @@
         <span id="sync-status-text" class="font-medium text-[11px]"><span class="text-emerald-400 font-bold">🟢 En línea:</span> Conectado a la Nube (Sincronización Activa)</span>
     </div>
     <div class="text-[10px] text-slate-400">
-        <span id="cloud-mode-label" class="bg-slate-800 px-2 py-0.5 rounded border border-slate-700">Firebase Firestore</span>
+        <span id="cloud-mode-label" class="bg-slate-800 px-2 py-0.5 rounded border border-slate-700"></span>
     </div>
 </div>
 
@@ -63,8 +68,8 @@
                     <img src="LOGO_IPUC_2013_COLOR.png" alt="Logo Iglesia" class="w-full h-full object-cover">
                 </div>
                 <div>
-                    <h1 class="font-extrabold text-base md:text-lg leading-tight tracking-tight">Registro de visitas y amigos</h1>
-                    <p class="text-xs text-slate-400 font-medium">Registro & Agenda visitasntes & amigos</p>
+                    <h1 class="font-extrabold text-base md:text-lg leading-tight tracking-tight">Rcepción y registro de visitas y amigos</h1>
+                    <p class="text-xs text-slate-400 font-medium">Registro & Agenda visitantes & amigos</p>
                 </div>
             </div>
 
@@ -105,7 +110,6 @@
         <!-- 1. VISTA KIOSCO (FORMULARIO TABLET) -->
         <section id="kiosk-view" class="max-w-2xl mx-auto transition-all duration-300">
             <div class="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
-                <!-- Header del Formulario -->
                 <div class="bg-gradient-to-r from-slate-900 via-brand-900 to-slate-900 p-6 md:p-8 text-white relative">
                     <div class="relative z-10">
                         <span class="bg-brand-500/30 text-brand-200 text-xs font-bold px-3 py-1 rounded-full border border-brand-400/30">Formulario de Bienvenida</span>
@@ -114,10 +118,7 @@
                     </div>
                 </div>
 
-                <!-- Formulario -->
                 <form id="visitor-form" class="p-6 md:p-8 space-y-6" onsubmit="window.handleFormSubmit(event)">
-                    
-                    <!-- Culto / Servicio -->
                     <div>
                         <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
                             <i class="fa-solid fa-place-of-worship mr-1 text-brand-600"></i> Culto o Servicio al que asistes *
@@ -136,13 +137,11 @@
                         </select>
                     </div>
 
-                    <!-- Campo manual si elige 'Otro' -->
                     <div id="other-service-container" class="hidden">
                         <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Especifica el Servicio / Evento</label>
                         <input type="text" id="other-service-input" placeholder="Ej: Evento de Niños, Conferencia..." class="w-full px-4 py-3.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 bg-slate-50 text-sm font-medium">
                     </div>
 
-                    <!-- Nombre Completo y Celular -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
@@ -158,7 +157,6 @@
                         </div>
                     </div>
 
-                    <!-- Correo Electrónico -->
                     <div>
                         <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
                             <i class="fa-solid fa-envelope mr-1 text-brand-600"></i> Correo Electrónico (Opcional)
@@ -166,7 +164,6 @@
                         <input type="email" id="email" placeholder="correo@ejemplo.com" class="w-full px-4 py-3.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 bg-slate-50 text-slate-800 text-sm font-medium">
                     </div>
 
-                    <!-- ¿Vino solo o acompañado? -->
                     <div>
                         <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
                             <i class="fa-solid fa-users mr-1 text-brand-600"></i> ¿Asistes solo(a) o acompañado(a)?
@@ -183,7 +180,6 @@
                         <input type="text" id="company-details" placeholder="Nombre de la persona o familiar" class="w-full px-4 py-3.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 bg-slate-50 text-sm font-medium">
                     </div>
 
-                    <!-- PREGUNTA PASTORAL: ¿Le gustaría que le visitemos? -->
                     <div class="p-5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl space-y-4">
                         <div class="flex items-start space-x-3">
                             <div class="w-8 h-8 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-black shrink-0 mt-0.5">
@@ -201,7 +197,6 @@
                             <option value="Tal vez">Tal vez más adelante</option>
                         </select>
 
-                        <!-- Campos dinámicos de Fecha y Hora de Visita -->
                         <div id="visit-schedule-container" class="hidden grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
                             <div>
                                 <label class="block text-xs font-bold text-amber-900 mb-1">Fecha tentativa sugerida</label>
@@ -214,7 +209,6 @@
                         </div>
                     </div>
 
-                    <!-- Botón Enviar -->
                     <button type="submit" class="w-full py-4 bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white rounded-2xl font-black text-base shadow-lg shadow-brand-500/30 transition duration-200 flex items-center justify-center space-x-2">
                         <i class="fa-solid fa-paper-plane"></i>
                         <span>Registrar Mi Visita</span>
@@ -225,7 +219,6 @@
 
         <!-- 2. VISTA BITÁCORA DEL DÍA (RECEPCIÓN) -->
         <section id="admin-view" class="hidden space-y-6">
-            <!-- Métricas Rápida -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
                     <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl font-bold shrink-0">
@@ -263,9 +256,19 @@
                         <h3 class="font-bold text-slate-800 text-lg">Asistentes Registrados</h3>
                         <p class="text-xs text-slate-400">Listado de personas ingresadas durante la jornada</p>
                     </div>
-                    <div class="relative max-w-xs w-full">
-                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-sm"></i>
-                        <input type="text" id="search-input" onkeyup="window.filterVisitors()" placeholder="Buscar nombre, celular..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500">
+                    <div class="flex items-center space-x-2 no-print">
+                        <button onclick="window.exportToExcel()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1 shadow">
+                            <i class="fa-solid fa-file-excel"></i>
+                            <span>Excel</span>
+                        </button>
+                        <button onclick="window.exportToPDF()" class="px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1 shadow">
+                            <i class="fa-solid fa-file-pdf"></i>
+                            <span>PDF</span>
+                        </button>
+                        <div class="relative max-w-xs w-full">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-sm"></i>
+                            <input type="text" id="search-input" onkeyup="window.filterVisitors()" placeholder="Buscar nombre, celular..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500">
+                        </div>
                     </div>
                 </div>
 
@@ -280,6 +283,7 @@
                                 <th class="py-3 px-4 text-center">Visita Pastoral</th>
                                 <th class="py-3 px-4 text-center">Fecha/Hora Propuesta</th>
                                 <th class="py-3 px-4 text-center">Hora Registro</th>
+                                <th class="py-3 px-4 text-center no-print">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="visitors-table-body">
@@ -304,7 +308,6 @@
                     <p class="text-xs text-slate-500">Gestiona las visitas agendadas, contacta por WhatsApp o coordina horarios con los hermanos.</p>
                 </div>
 
-                <!-- Filtros de Pestañas en Agenda -->
                 <div class="flex items-center space-x-1 bg-slate-100 p-1 rounded-2xl border border-slate-200">
                     <button id="agenda-tab-all" onclick="window.filterAgendaTab('all')" class="px-3 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white shadow">
                         Todas (<span id="count-agenda-all">0</span>)
@@ -321,7 +324,6 @@
                 </div>
             </div>
 
-            <!-- Grilla de Tarjetas de Visitas -->
             <div id="agenda-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <!-- Tarjetas dinámicas inyectadas por JS -->
             </div>
@@ -336,7 +338,7 @@
 
     <!-- FOOTER -->
     <footer class="bg-slate-900 border-t border-slate-800 text-slate-500 text-center py-4 text-xs">
-        <p>&copy; <span id="year">2026</span> Recepción Iglesia Pentecostal Unida de Colombia- Palayón - Bolívar</p>
+        <p>&copy; <span id="year">2026</span> Recepción <br> Iglesia pentecostal Unida de Colombia <br>- Playón - Bolívar Agenda Pastoral & Sincronización en Tiempo Real</p>
     </footer>
 
     <!-- SUCCESS MODAL -->
@@ -353,12 +355,72 @@
         </div>
     </div>
 
+    <!-- MODAL DE EDICIÓN -->
+    <div id="edit-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 space-y-4">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="text-lg font-bold text-slate-800"><i class="fa-solid fa-user-pen text-brand-600 mr-2"></i>Editar Registro</h3>
+                <button onclick="window.closeEditModal()" class="text-slate-400 hover:text-slate-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="edit-form" onsubmit="window.saveEditedRecord(event)" class="space-y-3">
+                <input type="hidden" id="edit-id">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Nombre Completo</label>
+                    <input type="text" id="edit-name" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Celular / WhatsApp</label>
+                    <input type="tel" id="edit-phone" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Servicio</label>
+                    <input type="text" id="edit-service" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">¿Desea Visita Pastoral?</label>
+                    <select id="edit-wants-visit" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm">
+                        <option value="No por ahora">No por ahora</option>
+                        <option value="Sí">Sí</option>
+                        <option value="Tal vez">Tal vez</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="window.closeEditModal()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-600 text-white rounded-xl text-xs font-bold hover:bg-brand-700 shadow">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE REPROGRAMACIÓN DE AGENDA -->
+    <div id="reschedule-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 space-y-4">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="text-lg font-bold text-amber-800"><i class="fa-solid fa-calendar-pen text-amber-500 mr-2"></i>Reprogramar Visita</h3>
+                <button onclick="window.closeRescheduleModal()" class="text-slate-400 hover:text-slate-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="reschedule-form" onsubmit="window.saveRescheduledVisit(event)" class="space-y-3">
+                <input type="hidden" id="reschedule-id">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Nueva Fecha</label>
+                    <input type="date" id="reschedule-date" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Nueva Hora</label>
+                    <input type="time" id="reschedule-time" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm">
+                </div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="window.closeRescheduleModal()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-300">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-amber-500 text-slate-950 rounded-xl text-xs font-black hover:bg-amber-600 shadow">Reprogramar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
-        // Array global de datos e inicialización inmediata de funciones de interfaz
         window.visitorsData = JSON.parse(localStorage.getItem('church_visitors_local_db') || '[]');
         window.currentAgendaFilter = 'all';
 
-        // Escape seguro para HTML
         window.escapeHtml = function(str) {
             if (!str) return '';
             return String(str)
@@ -369,7 +431,6 @@
                 .replace(/'/g, '&#039;');
         };
 
-        // Alternar servicios ("Otro")
         window.toggleOtherService = function(val) {
             const container = document.getElementById('other-service-container');
             if (container) {
@@ -378,7 +439,6 @@
             }
         };
 
-        // Alternar detalles de acompañantes
         window.toggleCompanyDetails = function(val) {
             const container = document.getElementById('company-detail-container');
             if (container) {
@@ -387,7 +447,6 @@
             }
         };
 
-        // Alternar campos de visita pastoral agendada
         window.toggleVisitSchedule = function(val) {
             const container = document.getElementById('visit-schedule-container');
             if (container) {
@@ -396,7 +455,6 @@
             }
         };
 
-        // Cambiar Vistas (Kiosco / Lista de Entrada / Agenda Pastoral)
         window.switchView = function(view) {
             const kioskView = document.getElementById('kiosk-view');
             const adminView = document.getElementById('admin-view');
@@ -431,7 +489,6 @@
             }
         };
 
-        // Guardar visitantes localmente
         window.saveLocalData = function(data) {
             try {
                 localStorage.setItem('church_visitors_local_db', JSON.stringify(data));
@@ -440,7 +497,6 @@
             }
         };
 
-        // Manejo del formulario de envío
         window.handleFormSubmit = async function(event) {
             event.preventDefault();
 
@@ -475,7 +531,6 @@
                 timestamp: Date.now()
             };
 
-            // 1. Guardar en la Nube (si está configurada)
             if (typeof window.saveVisitorRecord === 'function') {
                 const cloudId = await window.saveVisitorRecord(recordData);
                 if (cloudId) {
@@ -489,25 +544,20 @@
                 window.saveLocalData(window.visitorsData);
             }
 
-            // Notificación visual de éxito
             window.showSuccessModal();
 
-            // Notificación flotante si solicita visita
             if (wantsVisit === 'Sí' || wantsVisit === 'Tal vez') {
                 window.showToastNotification(fullName);
             }
 
-            // Resetear formulario
             document.getElementById('visitor-form')?.reset();
             window.toggleOtherService('');
             window.toggleCompanyDetails('Vino solo');
             window.toggleVisitSchedule('No por ahora');
 
-            // Actualizar contadores
             window.updateBadges();
         };
 
-        // Modal de Éxito
         window.showSuccessModal = function() {
             const modal = document.getElementById('success-modal');
             if (!modal) return;
@@ -530,7 +580,6 @@
             }, 300);
         };
 
-        // Toast de Notificación
         window.showToastNotification = function(name) {
             const toast = document.getElementById('toast-notification');
             const msg = document.getElementById('toast-message');
@@ -544,7 +593,7 @@
             }, 4000);
         };
 
-        // Renderizar Tabla de Visitantes
+        // RENDERIZAR TABLA DE VISITANTES
         window.renderVisitorsTable = function(filterQuery = '') {
             const tbody = document.getElementById('visitors-table-body');
             const emptyState = document.getElementById('empty-state');
@@ -602,12 +651,127 @@
                     <td class="py-4 px-4 text-center"><span class="px-2.5 py-1 text-xs rounded-full font-bold border ${badgeClass}">${window.escapeHtml(v.wantsVisit)}</span></td>
                     <td class="py-4 px-4 text-center text-xs"><strong>${window.escapeHtml(v.visitDate || '-')}</strong><br>${window.escapeHtml(v.visitTime || '')}</td>
                     <td class="py-4 px-4 text-center text-xs text-slate-400">${window.escapeHtml(v.createdDate)}<br>${window.escapeHtml(v.createdTime)}</td>
+                    <td class="py-4 px-4 text-center no-print">
+                        <button onclick="window.openEditModal('${v.id}')" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
         };
 
-        // Renderizar Tarjetas de la Agenda Pastoral
+        // FUNCIONES DE EDICIÓN
+        window.openEditModal = function(id) {
+            const item = window.visitorsData.find(v => v.id === id);
+            if (!item) return;
+            document.getElementById('edit-id').value = item.id;
+            document.getElementById('edit-name').value = item.fullName || '';
+            document.getElementById('edit-phone').value = item.phone || '';
+            document.getElementById('edit-service').value = item.serviceType || '';
+            document.getElementById('edit-wants-visit').value = item.wantsVisit || 'No por ahora';
+            document.getElementById('edit-modal').classList.remove('hidden');
+        };
+
+        window.closeEditModal = function() {
+            document.getElementById('edit-modal').classList.add('hidden');
+        };
+
+        window.saveEditedRecord = async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-id').value;
+            const updated = {
+                fullName: document.getElementById('edit-name').value,
+                phone: document.getElementById('edit-phone').value,
+                serviceType: document.getElementById('edit-service').value,
+                wantsVisit: document.getElementById('edit-wants-visit').value
+            };
+
+            if (typeof window.updateVisitorCloud === 'function') {
+                await window.updateVisitorCloud(id, updated);
+            } else {
+                const item = window.visitorsData.find(v => v.id === id);
+                if (item) {
+                    Object.assign(item, updated);
+                    window.saveLocalData(window.visitorsData);
+                    window.renderVisitorsTable();
+                    window.renderAgendaGrid();
+                }
+            }
+            window.closeEditModal();
+        };
+
+        // EXPORTACIÓN A EXCEL Y PDF
+        window.exportToExcel = function() {
+            if (window.visitorsData.length === 0) {
+                alert("No hay registros para exportar.");
+                return;
+            }
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+            csvContent += "Nombre,Celular,Servicio,Acompañamiento,Visita Pastoral,Fecha Visita,Hora Visita,Fecha Registro\n";
+
+            window.visitorsData.forEach(v => {
+                const row = [
+                    `"${v.fullName || ''}"`,
+                    `"${v.phone || ''}"`,
+                    `"${v.serviceType || ''}"`,
+                    `"${v.companyStatus || ''}"`,
+                    `"${v.wantsVisit || ''}"`,
+                    `"${v.visitDate || ''}"`,
+                    `"${v.visitTime || ''}"`,
+                    `"${v.createdDate || ''}"`
+                ].join(",");
+                csvContent += row + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Visitantes_IPUC_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        window.exportToPDF = function() {
+            window.print();
+        };
+
+        // REPROGRAMACIÓN EN AGENDA PASTORAL
+        window.openRescheduleModal = function(id) {
+            const item = window.visitorsData.find(v => v.id === id);
+            if (!item) return;
+            document.getElementById('reschedule-id').value = item.id;
+            document.getElementById('reschedule-date').value = item.visitDate || '';
+            document.getElementById('reschedule-time').value = item.visitTime || '';
+            document.getElementById('reschedule-modal').classList.remove('hidden');
+        };
+
+        window.closeRescheduleModal = function() {
+            document.getElementById('reschedule-modal').classList.add('hidden');
+        };
+
+        window.saveRescheduledVisit = async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('reschedule-id').value;
+            const newDate = document.getElementById('reschedule-date').value;
+            const newTime = document.getElementById('reschedule-time').value;
+
+            if (typeof window.updateVisitorCloud === 'function') {
+                await window.updateVisitorCloud(id, { visitDate: newDate, visitTime: newTime });
+            } else {
+                const item = window.visitorsData.find(v => v.id === id);
+                if (item) {
+                    item.visitDate = newDate;
+                    item.visitTime = newTime;
+                    window.saveLocalData(window.visitorsData);
+                    window.renderAgendaGrid();
+                }
+            }
+            window.closeRescheduleModal();
+        };
+
+        // RENDERIZAR AGENDA PASTORAL
         window.renderAgendaGrid = function() {
             const container = document.getElementById('agenda-cards-container');
             const emptyState = document.getElementById('agenda-empty-state');
@@ -663,7 +827,7 @@
                     </div>
                     <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
                         <a href="${waUrl}" target="_blank" class="py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-center text-xs font-bold transition"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>
-                        <a href="tel:${window.escapeHtml(item.phone)}" class="py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-center text-xs font-bold transition"><i class="fa-solid fa-phone"></i> Llamar</a>
+                        <button onclick="window.openRescheduleModal('${item.id}')" class="py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-center text-xs font-bold transition"><i class="fa-solid fa-calendar-pen"></i> Reprogramar</button>
                     </div>
                     <button onclick="window.updateVisitStatus('${item.id}', '${isCompleted ? 'Pendiente' : 'Completada'}')" class="w-full py-2 ${isCompleted ? 'bg-slate-200 text-slate-700' : 'bg-brand-600 text-white'} rounded-xl text-xs font-bold hover:opacity-90 transition">
                         ${isCompleted ? 'Marcar como Pendiente' : 'Marcar como Realizada'}
@@ -673,7 +837,6 @@
             });
         };
 
-        // Cambiar estado de visita (con sincronización en la nube si está disponible)
         window.updateVisitStatus = function(id, newStatus) {
             if (typeof window.updateVisitorStatusCloud === 'function') {
                 window.updateVisitorStatusCloud(id, newStatus);
@@ -688,7 +851,6 @@
             }
         };
 
-        // Filtro de la agenda
         window.filterAgendaTab = function(filter) {
             window.currentAgendaFilter = filter;
             ['all', 'pending', 'completed', 'today'].forEach(t => {
@@ -701,14 +863,13 @@
             window.renderAgendaGrid();
         };
 
-        // Actualizar contadores
         window.updateBadges = function() {
             const activeBadge = document.getElementById('active-count-badge');
             if (activeBadge) {
                 activeBadge.textContent = window.visitorsData.length;
             }
 
-            const pending = window.visitorsData.filter(v => (v.wantsVisit === 'Sí' || v.wantsVisit === 'Tal vez') && v.visitStatus !== 'Completada').length;
+            const pending = window.visitorsData.filter(v => (v.wantsVisit === 'Sí' || v.wantsVisit === 'Tal me') && v.visitStatus !== 'Completada').length;
             const pendingBadge = document.getElementById('pending-visits-badge');
             if (pendingBadge) {
                 if (pending > 0) {
@@ -725,67 +886,71 @@
             window.renderVisitorsTable(val);
         };
 
-        // Carga inicial
         window.onload = function() {
             const yearEl = document.getElementById('year');
             if (yearEl) yearEl.textContent = new Date().getFullYear();
-            
             window.updateBadges();
             window.renderVisitorsTable();
         };
     </script>
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyDA9BBg3kF_nty4SEcFyV_h-EO5G1nmAsQ",
-        authDomain: "asistencias-f909f.firebaseapp.com",
-        projectId: "asistencias-f909f",
-        storageBucket: "asistencias-f909f.firebasestorage.app",
-        messagingSenderId: "541148407775",
-        appId: "1:541148407775:web:f4e1aaaa87c05452ebc66a"
-    };
+    <!-- SCRIPT DE FIREBASE CON SOPORTE DE EDICIÓN Y REPROGRAMACIÓN -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const collectionName = "visitantes_ipuc";
+        const firebaseConfig = {
+            apiKey: "AIzaSyDA9BBg3kF_nty4SEcFyV_h-EO5G1nmAsQ",
+            authDomain: "asistencias-f909f.firebaseapp.com",
+            projectId: "asistencias-f909f",
+            storageBucket: "asistencias-f909f.firebasestorage.app",
+            messagingSenderId: "541148407775",
+            appId: "1:541148407775:web:f4e1aaaa87c05452ebc66a"
+        };
 
-    window.saveVisitorRecord = async function(recordData) {
-        try {
-            const docRef = await addDoc(collection(db, collectionName), recordData);
-            return docRef.id;
-        } catch (e) {
-            console.error("Error al guardar en Firestore: ", e);
-            return null;
-        }
-    };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const collectionName = "visitantes_ipuc";
 
-    window.updateVisitorStatusCloud = async function(id, newStatus) {
-        try {
-            const docRef = doc(db, collectionName, id);
-            await updateDoc(docRef, { visitStatus: newStatus });
-        } catch (e) {
-            console.error("Error al actualizar estado:", e);
-        }
-    };
+        window.saveVisitorRecord = async function(recordData) {
+            try {
+                const docRef = await addDoc(collection(db, collectionName), recordData);
+                return docRef.id;
+            } catch (e) {
+                console.error("Error al guardar en Firestore: ", e);
+                return null;
+            }
+        };
 
-    const q = query(collection(db, collectionName), orderBy("timestamp", "desc"));
-    onSnapshot(q, (snapshot) => {
-        window.visitorsData = [];
-        snapshot.forEach((docSnap) => {
-            window.visitorsData.push({
-                id: docSnap.id,
-                ...docSnap.data()
+        window.updateVisitorCloud = async function(id, dataToUpdate) {
+            try {
+                const docRef = doc(db, collectionName, id);
+                await updateDoc(docRef, dataToUpdate);
+            } catch (e) {
+                console.error("Error al actualizar registro en Firestore:", e);
+            }
+        };
+
+        window.updateVisitorStatusCloud = async function(id, newStatus) {
+            await window.updateVisitorCloud(id, { visitStatus: newStatus });
+        };
+
+        const q = query(collection(db, collectionName), orderBy("timestamp", "desc"));
+        onSnapshot(q, (snapshot) => {
+            window.visitorsData = [];
+            snapshot.forEach((docSnap) => {
+                window.visitorsData.push({
+                    id: docSnap.id,
+                    ...docSnap.data()
+                });
             });
-        });
 
-        window.updateBadges();
-        window.renderVisitorsTable();
-        window.renderAgendaGrid();
-    }, (error) => {
-        console.error("Error de sincronización: ", error);
-    });
-</script>
+            window.updateBadges();
+            window.renderVisitorsTable();
+            window.renderAgendaGrid();
+        }, (error) => {
+            console.error("Error de sincronización: ", error);
+        });
+    </script>
 </body>
 </html>
